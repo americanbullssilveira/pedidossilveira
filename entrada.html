@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador de Pedidos</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@700&display=swap');
+
+        body {
+            background-color: #f0f0f0;
+            font-family: 'Ubuntu', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 350px;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 1.5em;
+        }
+        #pedido-input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1.2em;
+            text-align: center;
+        }
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .action-button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 100%;
+        }
+        #marcar-pronto {
+            background-color: #ffdb58;
+            color: #333;
+        }
+        #marcar-pronto:hover {
+            background-color: #ffc93c;
+        }
+        #remover-pedido {
+            background-color: #e74c3c;
+            color: white;
+            display: none; /* Vamos esconder este botão, pois a remoção será por clique na lista */
+        }
+
+        .lista-pedidos-prontos {
+            width: 100%;
+            max-width: 500px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: left;
+        }
+        .lista-pedidos-prontos h3 {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1.2em;
+        }
+        .pedido-item {
+            background-color: #f0f0f0;
+            color: #333;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            font-weight: bold;
+            font-size: 1.1em;
+            text-align: center;
+        }
+        .pedido-item:hover {
+            background-color: #e0e0e0;
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Informe o número do pedido</h2>
+        <input type="number" id="pedido-input" placeholder="Ex: 1234">
+        <div class="button-group">
+            <button id="marcar-pronto" class="action-button">Marcar como Pronto</button>
+        </div>
+    </div>
+
+    <div class="lista-pedidos-prontos">
+        <h3>Pedidos Prontos</h3>
+        <div id="lista-pedidos">
+            </div>
+    </div>
+
+    <script>
+        const input = document.getElementById('pedido-input');
+        const marcarProntoBtn = document.getElementById('marcar-pronto');
+        const listaPedidosContainer = document.getElementById('lista-pedidos');
+
+        function renderizarLista() {
+            const pedidos = JSON.parse(localStorage.getItem('pedidosProntos')) || [];
+            listaPedidosContainer.innerHTML = '';
+            if (pedidos.length === 0) {
+                listaPedidosContainer.innerHTML = '<p style="text-align: center; color: #777;">Nenhum pedido pronto no momento.</p>';
+            } else {
+                pedidos.forEach(numero => {
+                    const item = document.createElement('div');
+                    item.className = 'pedido-item';
+                    item.innerText = numero;
+                    item.addEventListener('click', () => {
+                        removerPedido(numero);
+                    });
+                    listaPedidosContainer.appendChild(item);
+                });
+            }
+        }
+
+        function removerPedido(numero) {
+            let pedidos = JSON.parse(localStorage.getItem('pedidosProntos')) || [];
+            const index = pedidos.indexOf(numero);
+            if (index > -1) {
+                pedidos.splice(index, 1);
+                localStorage.setItem('pedidosProntos', JSON.stringify(pedidos));
+                window.dispatchEvent(new Event('storage'));
+            }
+            renderizarLista();
+        }
+
+        marcarProntoBtn.addEventListener('click', () => {
+            const numeroPedido = input.value;
+            if (numeroPedido) {
+                let pedidos = JSON.parse(localStorage.getItem('pedidosProntos')) || [];
+                if (!pedidos.includes(numeroPedido)) {
+                    pedidos.unshift(numeroPedido);
+                    localStorage.setItem('pedidosProntos', JSON.stringify(pedidos));
+                    window.dispatchEvent(new Event('storage'));
+                }
+                input.value = '';
+            }
+            renderizarLista();
+        });
+
+        // Atualiza a lista quando a página carrega
+        window.addEventListener('load', renderizarLista);
+
+        // Ouve mudanças no localStorage de outras abas (display.html)
+        window.addEventListener('storage', renderizarLista);
+    </script>
+
+</body>
+</html>
